@@ -6,27 +6,49 @@
 An automatic garden irrigation system based on the ESP32-C3 SuperMini. The project monitors soil moisture and air conditions and controls a normally closed 220V solenoid valve through a wireless relay.
 
 Features
+
 🌱 Monitoring soil moisture using HW-390 capacitive sensors
+
 🌡️ Measuring air temperature and humidity with an AHT10 sensor
+
 💧 Automatic irrigation based on soil moisture
+
 ⏱️ Maximum watering time protection
+
 🛡️ Protection against continuous watering caused by a faulty sensor
+
 📡 Wireless valve control using a 433 MHz transmitter
+
 🔌 Control of a 220V normally closed solenoid valve through a CR-NAC100 relay
+
 🔄 Automatic and manual operating modes
+
 📱 Wi-Fi control and monitoring from a smartphone
+
 📊 Display of soil and air conditions
+
 ☀️ Possibility of independent power supply from a solar panel and battery
+
 Hardware
+
 ESP32-C3 SuperMini — main controller
+
 HW-390 — capacitive soil moisture sensors
+
 AHT10 — temperature and air humidity sensor
+
 433 MHz transmitter — wireless communication
+
 CR-NAC100 — wireless relay module
+
 220V NC solenoid valve — controls the water supply
+
 4N35 optocoupler — electrical isolation where required
+
 Water tank and pump (optional)
+
 Basic Architecture
+
         ┌──────────────────────┐
         │      ESP32-C3        │
         │     SuperMini        │
@@ -36,7 +58,7 @@ Basic Architecture
         │          │           │
         ▼          ▼           ▼
      HW-390      AHT10      433 MHz TX
-   Soil Sensors   Temp/       │
+    Soil Sensors   Temp/       │
                   Humidity     ▼
                          ┌───────────┐
                          │ CR-NAC100 │
@@ -52,15 +74,24 @@ Basic Architecture
                               │
                               ▼
                            💧 Water
-Current GPIO Configuration
-Component	ESP32-C3 GPIO
-HW-390 #1	GPIO4
-HW-390 #2	GPIO5
-HW-390 #3	GPIO6
-AHT10 SDA	GPIO8
-AHT10 SCL	GPIO9
-433 MHz TX	GPIO10
-Project Status
+ Current GPIO Configuration
+ 
+ Component	ESP32-C3 GPIO
+ 
+ HW-390 #1-------GPIO4
+ 
+ HW-390 #2-------GPIO5
+ 
+ HW-390 #3-------GPIO6
+ 
+ AHT10 SDA-------GPIO8
+ 
+ AHT10 SCL-------GPIO9
+ 
+ 433 MHz TX------GPIO10
+ 
+ Project Status
+ 
 
 🚧 Work in progress
 
