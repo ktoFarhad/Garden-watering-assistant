@@ -12,6 +12,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include "web_ui.h"
 
 #define SOIL1 4
 #define SOIL2 5
@@ -176,39 +177,75 @@ String jsonStatus() {
   return json;
 }
 
+void sendJsonResponse(int code, const String &body) {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "*");
+  server.send(code, "application/json", body);
+}
+
+void handleCORS() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "*");
+  server.send(204);
+}
+
 void handleRoot() {
-  server.send(200, "text/html",
-    "<h1>Garden watering assistant</h1><p>Use <a href='/status'>/status</a> for JSON status.</p>"
-    "<p>Controls: /mode?value=auto|manual, /water?seconds=30, /stop</p>");
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send_P(200, "text/html", INDEX_HTML);
 }
 
 void handleMode() {
   String value = server.arg("value");
   if (value == "auto") automaticMode = true;
   else if (value == "manual") automaticMode = false;
-  else { server.send(400, "text/plain", "value must be auto or manual"); return; }
+  else {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(400, "text/plain", "value must be auto or manual");
+    return;
+  }
   preferences.putBool("auto", automaticMode);
   if (automaticMode) stopWatering("automatic mode enabled");
   lastEvent = String("Mode changed to ") + (automaticMode ? "automatic" : "manual");
-  server.send(200, "application/json", jsonStatus());
+  sendJsonResponse(200, jsonStatus());
 }
 
 void handleWater() {
-  if (automaticMode) { server.send(409, "text/plain", "switch to manual mode first"); return; }
+  if (automaticMode) {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(409, "text/plain", "switch to manual mode first");
+    return;
+  }
   uint32_t seconds = server.arg("seconds").toInt();
-  if (seconds == 0 || seconds > 600) { server.send(400, "text/plain", "seconds must be 1..600"); return; }
+  if (seconds == 0 || seconds > 600) {
+    server.sendHeader("Access-Control-Allow-Origin", "*");
+    server.send(400, "text/plain", "seconds must be 1..600");
+    return;
+  }
   startWatering("manual command");
   manualStopAt = millis() + seconds * 1000UL;
-  server.send(200, "application/json", jsonStatus());
+  sendJsonResponse(200, jsonStatus());
 }
 
 void setupWebServer() {
-  server.on("/", handleRoot);
-  server.on("/status", []() { server.send(200, "application/json", jsonStatus()); });
-  server.on("/mode", handleMode);
-  server.on("/water", handleWater);
-  server.on("/stop", []() { stopWatering("manual command"); server.send(200, "application/json", jsonStatus()); });
-  server.onNotFound([]() { server.send(404, "text/plain", "not found"); });
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/status", HTTP_GET, []() { sendJsonResponse(200, jsonStatus()); });
+  server.on("/status", HTTP_OPTIONS, handleCORS);
+  server.on("/mode", HTTP_GET, handleMode);
+  server.on("/mode", HTTP_OPTIONS, handleCORS);
+  server.on("/water", HTTP_GET, handleWater);
+  server.on("/water", HTTP_OPTIONS, handleCORS);
+  server.on("/stop", HTTP_GET, []() { stopWatering("manual command"); sendJsonResponse(200, jsonStatus()); });
+  server.on("/stop", HTTP_OPTIONS, handleCORS);
+  server.onNotFound([]() {
+    if (server.method() == HTTP_OPTIONS) {
+      handleCORS();
+    } else {
+      server.sendHeader("Access-Control-Allow-Origin", "*");
+      server.send(404, "text/plain", "not found");
+    }
+  });
   server.begin();
 }
 
